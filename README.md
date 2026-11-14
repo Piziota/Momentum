@@ -9,11 +9,19 @@ Built with SwiftUI. No Xcode needed — it compiles with the Command Line Tools 
 
 ```bash
 ./build.sh
-open build/Momentum.app
 ```
 
-To keep it around, drag `build/Momentum.app` into `/Applications`.
-Add it to **System Settings → General → Login Items** so the menu bar counter is always there.
+That compiles the app, builds the icon, ad-hoc signs it, and installs it to
+`/Applications/Momentum.app` — quitting and relaunching the running copy if there is one.
+The install only happens when the compile succeeded, so a broken build can never replace a
+working app. To build without touching the installed copy:
+
+```bash
+./build.sh --no-install
+```
+
+Add it to **System Settings → General → Login Items** so the menu bar counter and the global
+capture hotkey are always available.
 
 ## What's in it
 
@@ -154,3 +162,18 @@ build.sh               compiles, bundles, makes the icon, ad-hoc signs
 1. EventKit, to show your Apple/Outlook calendar events next to your tasks.
 2. Recurring tasks ("every Monday").
 3. An iPhone companion — the model is plain Codable, so it would port cleanly.
+
+## Working on it
+
+```
+~/projects/Momentum        the source, under git
+/Applications/Momentum.app the app you actually run (installed by build.sh)
+~/Library/Application Support/Momentum/store.json   your tasks
+```
+
+Your data lives outside both the source folder and the app bundle, so rebuilding, reinstalling
+or deleting the app never touches it.
+
+Normal loop: edit something in `Sources/`, run `./build.sh`, try it, then
+`git add -A && git commit` when it's worth keeping. `git log` is your undo history; `build/` is
+ignored because it's regenerated every time.
