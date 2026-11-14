@@ -1,0 +1,13 @@
+# Compiled output — rebuilt by ./build.sh, no reason to version it
+build/
+
+# macOS
+.DS_Store
+
+# Swift / editor noise
+*.swiftmodule
+*.swiftdoc
+*.o
+*.dSYM/
+.swiftpm/
+*.xcuserdatad/
