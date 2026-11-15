@@ -23,7 +23,16 @@ final class AppStore: ObservableObject {
         ?? HotkeyCenter.defaultID
     @Published var hotkeyFailed: Bool = false
 
+    /// Bright, dark or system. Not part of the task file — see ThemeChoice.
+    @Published var theme: ThemeChoice = ThemeChoice.saved
+
     var hotkeyLabel: String { HotkeyCenter.combo(hotkeyID).label }
+
+    func setTheme(_ t: ThemeChoice) {
+        theme = t
+        UserDefaults.standard.set(t.rawValue, forKey: ThemeChoice.key)
+        t.apply()
+    }
 
     func setHotkey(_ id: String) {
         hotkeyID = id

@@ -27,6 +27,8 @@ struct MomentumApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Before the first window draws, so there is no flash of the wrong theme.
+        ThemeChoice.saved.apply()
         Reminders.shared.start()
         NSApp.setActivationPolicy(.regular)
     }
@@ -196,6 +198,18 @@ struct MomentumCommands: Commands {
         }
 
         CommandGroup(after: .appInfo) {
+            Menu("Appearance") {
+                ForEach(ThemeChoice.allCases) { t in
+                    Button((store.theme == t ? "✓  " : "    ") + t.label) {
+                        store.setTheme(t)
+                    }
+                }
+            }
+            Button("Switch Bright / Dark") {
+                store.setTheme(store.theme == .dark ? .light : .dark)
+            }
+            .keyboardShortcut("t", modifiers: [.command, .control])
+            Divider()
             Menu("Global Capture Hotkey") {
                 ForEach(HotkeyCenter.combos) { c in
                     Button((store.hotkeyID == c.id ? "✓  " : "    ") + c.label) {

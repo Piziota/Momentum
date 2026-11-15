@@ -166,14 +166,21 @@ struct Sidebar: View {
         VStack(spacing: 8) {
             Rectangle().fill(Theme.stroke).frame(height: 1)
             HStack(spacing: 8) {
+                IconButton(icon: store.theme.icon,
+                           help: "Theme: \(store.theme.label) — click for \(store.theme.next.label)",
+                           size: 11) {
+                    store.setTheme(store.theme.next)
+                }
                 if store.streak > 0 {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(Theme.amber)
-                        Text("\(store.streak)d streak")
+                        Text("\(store.streak)d")
                             .font(Theme.ui(10.5, .semibold))
                             .foregroundStyle(Theme.textDim)
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                 }
                 Spacer()
@@ -182,7 +189,8 @@ struct Sidebar: View {
                     .controlSize(.mini)
                     .foregroundStyle(Theme.textDim)
             }
-            .padding(.horizontal, 14)
+            .padding(.leading, 6)
+            .padding(.trailing, 14)
             .padding(.bottom, 10)
         }
     }

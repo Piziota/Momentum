@@ -64,6 +64,64 @@ extension NSColor {
     }
 }
 
+// MARK: - Appearance
+
+/// Bright, dark, or whatever the system is set to.
+///
+/// The whole palette is built from `Color.dual`, which resolves against the
+/// *appearance* it is drawn in — so switching theme is a matter of setting one
+/// appearance on the application. That also carries the window chrome, the
+/// scroll bars, the menus and every NSVisualEffectView along with it, which
+/// setting a SwiftUI colour scheme on the root view alone would not.
+enum ThemeChoice: String, CaseIterable, Identifiable {
+    case system, light, dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: return "Match System"
+        case .light:  return "Bright"
+        case .dark:   return "Dark"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light:  return "sun.max.fill"
+        case .dark:   return "moon.fill"
+        }
+    }
+
+    private var appearance: NSAppearance? {
+        switch self {
+        case .system: return nil          // nil = inherit from macOS
+        case .light:  return NSAppearance(named: .aqua)
+        case .dark:   return NSAppearance(named: .darkAqua)
+        }
+    }
+
+    func apply() {
+        NSApp?.appearance = appearance
+    }
+
+    /// The next one, for the single-click switcher in the sidebar footer.
+    var next: ThemeChoice {
+        let all = ThemeChoice.allCases
+        let i = all.firstIndex(of: self) ?? 0
+        return all[(i + 1) % all.count]
+    }
+
+    // Stored in defaults rather than the task file: it is a preference about
+    // this Mac, not part of your data.
+    static let key = "themeChoice"
+
+    static var saved: ThemeChoice {
+        ThemeChoice(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .system
+    }
+}
+
 // MARK: - Design tokens
 
 struct Theme {

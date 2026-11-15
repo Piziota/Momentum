@@ -88,6 +88,22 @@ The capture box pre-selects a guess — a time of day suggests an Event, words l
 or *course* suggest Learning, a long estimate suggests a Project — and you click another if it
 guessed wrong.
 
+### Bright and dark
+
+Two full themes, not one palette dimmed: every colour is defined twice, and the
+app picks the set that matches the appearance it is drawn in.
+
+| | |
+|---|---|
+| **Match System** | follows macOS, flipping with it at sunset if you use Auto |
+| **Bright** | stays light whatever the system is doing |
+| **Dark** | stays dark whatever the system is doing |
+
+Switch it from the icon in the bottom-left corner of the sidebar, from
+**Momentum → Appearance**, or with **⌃⌘T** to flip straight between bright and
+dark. The choice is remembered, and it carries the window chrome, the menus and
+the blurred backdrops with it rather than just recolouring the content.
+
 ### Structure
 
 - **Projects → Tasks → Checkpoints**, where each checkpoint can carry its own date
@@ -163,6 +179,7 @@ but the app has to be running.
 | ⌘N / ⌘⇧Space | New task / quick capture (inside the app) |
 | ⌘1 ⌘2 ⌘3 | Today / Upcoming / All |
 | ⌥⌘L ⌥⌘B ⌥⌘K ⌥⌘G | List / Board / Calendar / Timeline |
+| ⌃⌘T | Switch bright / dark |
 | ⌘⇧D | Show completed |
 | ⌘↵ | Mark selected task done |
 | ⌘⌫ | Delete selected task |
@@ -198,7 +215,7 @@ no package manager, no third-party dependencies.
 Sources/
   Model.swift            Project, Item, Checkpoint, Page, Tag, FieldDef, ItemKind
   Store.swift            state, persistence, queries, mutations, sample data
-  Theme.swift            colours (light + dark), fonts, motion, date formatting
+  Theme.swift            colours (light + dark), theme choice, fonts, motion, dates
   Components.swift       checkboxes, chips, pills, rings, bars, buttons, empty states
   TaskRow.swift          the main list row, with inline checkpoint expansion
   Sidebar.swift          navigation, projects, tags, project editor
