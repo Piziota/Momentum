@@ -23,6 +23,9 @@ final class AppStore: ObservableObject {
         ?? HotkeyCenter.defaultID
     @Published var hotkeyFailed: Bool = false
 
+    /// Set when the store file could not be read; the copy is kept beside it.
+    @Published var loadFailed: Bool = false
+
     /// Bright, dark or system. Not part of the task file — see ThemeChoice.
     @Published var theme: ThemeChoice = ThemeChoice.saved
 
@@ -79,6 +82,7 @@ final class AppStore: ObservableObject {
         case "today": route = .today
         case "upcoming": route = .upcoming
         case "all": route = .all
+        case "learning": route = .learning
         default: break
         }
         if let m = env["MOMENTUM_MODE"], let mode = ViewMode(rawValue: m) { self.mode = mode }
@@ -94,7 +98,19 @@ final class AppStore: ObservableObject {
         guard let data = try? Data(contentsOf: Self.storeURL) else { return }
         let dec = JSONDecoder()
         dec.dateDecodingStrategy = .iso8601
-        guard let snap = try? dec.decode(Snapshot.self, from: data) else { return }
+        guard let snap = try? dec.decode(Snapshot.self, from: data) else {
+            // The file exists but will not decode. Returning here would leave the
+            // app empty, and the sample data would then be written straight over
+            // it — so move it aside first and keep it.
+            loadFailed = true
+            let stamp = ISO8601DateFormatter().string(from: Date())
+                .replacingOccurrences(of: ":", with: "-")
+            let aside = Self.storeURL
+                .deletingLastPathComponent()
+                .appendingPathComponent("store.unreadable-\(stamp).json")
+            try? FileManager.default.moveItem(at: Self.storeURL, to: aside)
+            return
+        }
         projects = snap.projects
         tasks = snap.tasks
         tags = snap.tags
@@ -199,6 +215,8 @@ final class AppStore: ObservableObject {
             out = tasks.filter { $0.due != nil }
         case .all:
             out = tasks
+        case .learning:
+            out = tasks.filter { $0.category == .learning }
         case .project(let id):
             out = tasks.filter { $0.projectID == id }
         case .tag(let id):
@@ -242,6 +260,7 @@ final class AppStore: ObservableObject {
         case .today: return "Today"
         case .upcoming: return "Upcoming"
         case .all: return "All tasks"
+        case .learning: return "Learning"
         case .project(let id): return project(id)?.name ?? "Project"
         case .tag(let id): return "#" + (tag(id)?.name ?? "tag")
         }
@@ -252,9 +271,65 @@ final class AppStore: ObservableObject {
         case .today: return Theme.accent
         case .upcoming: return Theme.blue
         case .all: return Theme.textDim
+        case .learning: return Theme.violet
         case .project(let id): return project(id)?.color ?? Theme.accent
         case .tag(let id): return tag(id)?.color ?? Theme.accent
         }
+    }
+
+    // MARK: - Learning
+
+    /// Every topic you are learning, the ones with unread links first.
+    var learningTopics: [Item] {
+        tasks.filter { $0.category == .learning && (showDone || !$0.isDone) }
+            .sorted {
+                if $0.unreadLinks != $1.unreadLinks { return $0.unreadLinks > $1.unreadLinks }
+                return $0.createdAt > $1.createdAt
+            }
+    }
+
+    var totalLinks: Int { tasks.reduce(0) { $0 + $1.links.count } }
+    var unreadLinks: Int { tasks.reduce(0) { $0 + $1.unreadLinks } }
+
+    func addResource(_ itemID: UUID, url: String, title: String = "") {
+        let clean = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty, let i = tasks.firstIndex(where: { $0.id == itemID }) else { return }
+        var list = tasks[i].links
+        list.insert(Resource(url: clean, title: title.trimmingCharacters(in: .whitespaces)), at: 0)
+        tasks[i].resources = list
+    }
+
+    func toggleResource(_ itemID: UUID, _ resourceID: UUID) {
+        guard let i = tasks.firstIndex(where: { $0.id == itemID }) else { return }
+        var list = tasks[i].links
+        guard let j = list.firstIndex(where: { $0.id == resourceID }) else { return }
+        list[j].done.toggle()
+        tasks[i].resources = list
+    }
+
+    func removeResource(_ itemID: UUID, _ resourceID: UUID) {
+        guard let i = tasks.firstIndex(where: { $0.id == itemID }) else { return }
+        tasks[i].resources = tasks[i].links.filter { $0.id != resourceID }
+    }
+
+    func renameResource(_ itemID: UUID, _ resourceID: UUID, to title: String) {
+        guard let i = tasks.firstIndex(where: { $0.id == itemID }) else { return }
+        var list = tasks[i].links
+        guard let j = list.firstIndex(where: { $0.id == resourceID }) else { return }
+        list[j].title = title.trimmingCharacters(in: .whitespaces)
+        tasks[i].resources = list
+    }
+
+    /// A new topic, created straight from the Learning screen.
+    @discardableResult
+    func addTopic(_ title: String) -> UUID? {
+        let t = title.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return nil }
+        var item = Item(title: t)
+        item.kind = .learning
+        item.status = .active
+        tasks.insert(item, at: 0)
+        return item.id
     }
 
     // MARK: - Mutations
@@ -537,7 +612,22 @@ final class AppStore: ObservableObject {
                         status: .done, priority: .low, due: day(-1))
         done.completedAt = Date()
 
-        tasks = [a, b, c, d, e, f, g, h, done]
+        h.resources = [
+            Resource(url: "https://developer.apple.com/tutorials/swiftui",
+                     title: "Apple's SwiftUI tutorials", done: true),
+            Resource(url: "https://www.hackingwithswift.com/quick-start/swiftui",
+                     title: "Hacking with Swift — SwiftUI by example"),
+            Resource(url: "https://swiftbysundell.com/tags/swiftui/")
+        ]
+
+        var learn = Item(title: "System design", kind: .learning, status: .active)
+        learn.resources = [
+            Resource(url: "https://github.com/donnemartin/system-design-primer",
+                     title: "The system design primer"),
+            Resource(url: "https://highscalability.com/", note: "Case studies")
+        ]
+
+        tasks = [a, b, c, d, e, f, g, h, learn, done]
 
         // A couple of custom fields, so the Info tab has something real in it.
         if let i = projects.firstIndex(where: { $0.id == work.id }) {

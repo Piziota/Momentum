@@ -1,12 +1,13 @@
 import SwiftUI
 
 enum DetailTab: String, CaseIterable, Identifiable {
-    case checkpoints, pages, info
+    case checkpoints, pages, links, info
     var id: String { rawValue }
     var label: String {
         switch self {
         case .checkpoints: return "Checkpoints"
         case .pages: return "Pages"
+        case .links: return "Links"
         case .info: return "Info"
         }
     }
@@ -14,6 +15,7 @@ enum DetailTab: String, CaseIterable, Identifiable {
         switch self {
         case .checkpoints: return "checklist"
         case .pages: return "doc.text"
+        case .links: return "link"
         case .info: return "slider.horizontal.3"
         }
     }
@@ -25,6 +27,7 @@ struct DetailView: View {
 
     @State private var tab: DetailTab = .checkpoints
     @State private var newCheckpoint = ""
+    @State private var newLink = ""
     @State private var openPage: UUID? = nil
     @Namespace private var tabNS
 
@@ -41,12 +44,17 @@ struct DetailView: View {
                     switch tab {
                     case .checkpoints: checkpointsTab
                     case .pages: pagesTab
+                    case .links: linksTab
                     case .info: infoTab
                     }
                 }
                 .padding(14)
             }
             .scrollIndicators(.hidden)
+        }
+        .onAppear {
+            // A topic you are learning opens on its links, not an empty checklist.
+            if item.category == .learning, item.checkpoints.isEmpty { tab = .links }
         }
         .frame(width: 368)
         .background(VisualEffect(material: .contentBackground).ignoresSafeArea())
@@ -173,6 +181,12 @@ struct DetailView: View {
                                     .padding(.horizontal, 4).padding(.vertical, 0.5)
                                     .background(Capsule().fill(Theme.stroke))
                             }
+                            if t == .links, !item.links.isEmpty {
+                                Text("\(item.links.count)")
+                                    .font(Theme.ui(9.5, .bold))
+                                    .padding(.horizontal, 4).padding(.vertical, 0.5)
+                                    .background(Capsule().fill(Theme.stroke))
+                            }
                             if t == .pages, !item.pages.isEmpty {
                                 Text("\(item.pages.count)")
                                     .font(Theme.ui(9.5, .bold))
@@ -287,6 +301,44 @@ struct DetailView: View {
     }
 
     // MARK: Info
+
+    // MARK: Links
+
+    @ViewBuilder private var linksTab: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 7) {
+                Image(systemName: "link")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.textFaint)
+                    .frame(width: 14)
+                InlineField(placeholder: "Paste a link…", text: $newLink, font: Theme.ui(12)) { addLink() }
+                GhostButton(title: "Add", icon: "plus") { addLink() }
+                    .disabled(newLink.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding(.bottom, 2)
+
+            if item.links.isEmpty {
+                Text("Resources you collect for this one — articles, videos, docs. They also show up under Learning.")
+                    .font(Theme.ui(11.5))
+                    .foregroundStyle(Theme.textFaint)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 4)
+            } else {
+                ForEach(item.links) { r in
+                    ResourceRow(topicID: item.id, resource: r)
+                }
+            }
+        }
+    }
+
+    private func addLink() {
+        let raw = newLink.trimmingCharacters(in: .whitespaces)
+        guard !raw.isEmpty else { return }
+        let parts = raw.split(separator: " ", maxSplits: 1).map(String.init)
+        store.addResource(item.id, url: parts.first ?? raw,
+                          title: parts.count > 1 ? parts[1] : "")
+        newLink = ""
+    }
 
     private var infoTab: some View {
         VStack(alignment: .leading, spacing: 16) {

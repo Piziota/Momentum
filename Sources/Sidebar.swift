@@ -89,6 +89,10 @@ struct Sidebar: View {
                        count: store.dueSoon.count,
                        selected: store.route == .upcoming) { store.route = .upcoming }
 
+            SidebarRow(icon: "books.vertical.fill", title: "Learning", tint: Theme.violet,
+                       count: store.unreadLinks,
+                       selected: store.route == .learning) { store.route = .learning }
+
             SidebarRow(icon: "square.stack.3d.up", title: "All tasks", tint: Theme.textDim,
                        count: store.tasks.filter { !$0.isDone }.count,
                        selected: store.route == .all) { store.route = .all }

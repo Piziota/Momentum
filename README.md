@@ -88,6 +88,30 @@ The capture box pre-selects a guess — a time of day suggests an Event, words l
 or *course* suggest Learning, a long estimate suggests a Project — and you click another if it
 guessed wrong.
 
+### Learning
+
+A shelf for the things you are learning, separate from the task list — because
+resources pile up over months and are not things to tick off by Friday.
+
+Each topic holds the links you have collected under it: articles, videos, docs,
+repos. Paste a URL and it files itself, taking its title from the page address
+if you do not give one. Type a label after the URL and that becomes the title,
+so one line is enough:
+
+```
+https://github.com/donnemartin/system-design-primer  The primer
+```
+
+Links can be marked read, renamed, copied, opened in your browser or removed.
+Each topic shows how many you have worked through and how many are still
+waiting, and the sidebar carries the unread count. Searching looks inside the
+links as well as the topic names, so a half-remembered domain is enough to find
+something again.
+
+Anything captured as a **Learning** category lands here, and every task has a
+**Links** tab in the inspector — so a project can collect resources too, and
+they show up on the shelf alongside the topics.
+
 ### Bright and dark
 
 Two full themes, not one palette dimmed: every colour is defined twice, and the
@@ -177,7 +201,7 @@ but the app has to be running.
 |---|---|
 | **⌃⌥Space** | **Capture from any app** (system-wide) |
 | ⌘N / ⌘⇧Space | New task / quick capture (inside the app) |
-| ⌘1 ⌘2 ⌘3 | Today / Upcoming / All |
+| ⌘1 ⌘2 ⌘3 ⌘4 | Today / Upcoming / Learning / All |
 | ⌥⌘L ⌥⌘B ⌥⌘K ⌥⌘G | List / Board / Calendar / Timeline |
 | ⌃⌘T | Switch bright / dark |
 | ⌘⇧D | Show completed |
@@ -213,7 +237,7 @@ no package manager, no third-party dependencies.
 
 ```
 Sources/
-  Model.swift            Project, Item, Checkpoint, Page, Tag, FieldDef, ItemKind
+  Model.swift            Project, Item, Checkpoint, Page, Resource, Tag, FieldDef
   Store.swift            state, persistence, queries, mutations, sample data
   Theme.swift            colours (light + dark), theme choice, fonts, motion, dates
   Components.swift       checkboxes, chips, pills, rings, bars, buttons, empty states
@@ -223,6 +247,7 @@ Sources/
   MainContent.swift      top bar and grouped list
   BoardView.swift        kanban with drag and drop
   CalendarView.swift     month grid, day panel, drag to reschedule
+  LearningView.swift     the learning shelf: topics and their links
   GanttView.swift        timeline: bars, milestones, dependencies, drag and resize
   DetailView.swift       inspector: checkpoints, tags, fields, dependencies
   Pages.swift            page cards and the Markdown renderer

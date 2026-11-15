@@ -53,7 +53,9 @@ struct MainContent: View {
             .fixedSize()
             .help("Sort and filter")
 
-            ModeSwitcher(mode: $store.mode)
+            if !isLearning {
+                ModeSwitcher(mode: $store.mode)
+            }
 
             PrimaryButton(title: "New task", icon: "plus", tint: store.routeTint) {
                 store.quickAddOpen = true
@@ -64,9 +66,21 @@ struct MainContent: View {
         .padding(.bottom, 13)
     }
 
+    private var isLearning: Bool {
+        if case .learning = store.route { return true }
+        return false
+    }
+
     private var subtitle: String {
         let open = items.filter { !$0.isDone }.count
         switch store.route {
+        case .learning:
+            let topics = store.learningTopics.count
+            let links = store.totalLinks
+            if topics == 0 { return "No topics yet" }
+            let unread = store.unreadLinks
+            return "\(topics) topic\(topics == 1 ? "" : "s") · \(links) link\(links == 1 ? "" : "s")"
+                + (unread > 0 ? " · \(unread) to read" : "")
         case .today:
             if store.overdue.isEmpty && store.dueToday.isEmpty { return "Nothing due — you're clear" }
             var bits: [String] = []
@@ -86,6 +100,16 @@ struct MainContent: View {
     // MARK: Content by mode
 
     @ViewBuilder private var content: some View {
+        // Learning is a shelf of topics and links, not another cut of the task
+        // list, so it ignores the list/board/calendar/timeline modes.
+        if case .learning = store.route {
+            LearningView()
+        } else {
+            byMode
+        }
+    }
+
+    @ViewBuilder private var byMode: some View {
         switch store.mode {
         case .list:
             if case .today = store.route, store.search.isEmpty {

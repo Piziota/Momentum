@@ -158,6 +158,41 @@ struct Page: Identifiable, Codable, Hashable {
     var updatedAt: Date = Date()
 }
 
+/// A link collected under a topic you are learning: an article, a video, a doc.
+struct Resource: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var url: String
+    var title: String = ""
+    var note: String = ""
+    var done: Bool = false          // read / watched / worked through
+    var addedAt: Date = Date()
+
+    /// What to show when nothing was typed: the host, then the last path piece,
+    /// so a bare pasted URL still reads as something.
+    var displayTitle: String {
+        let t = title.trimmingCharacters(in: .whitespaces)
+        if !t.isEmpty { return t }
+        guard let u = URL(string: normalizedURL) else { return url }
+        let host = (u.host ?? url).replacingOccurrences(of: "www.", with: "")
+        let last = u.pathComponents.last.flatMap { $0 == "/" ? nil : $0 } ?? ""
+        let tidy = last.replacingOccurrences(of: "-", with: " ")
+                       .replacingOccurrences(of: "_", with: " ")
+        return tidy.isEmpty ? host : "\(host) · \(tidy)"
+    }
+
+    var host: String {
+        guard let u = URL(string: normalizedURL), let h = u.host else { return "" }
+        return h.replacingOccurrences(of: "www.", with: "")
+    }
+
+    /// People paste "github.com/x" as often as a full URL.
+    var normalizedURL: String {
+        let t = url.trimmingCharacters(in: .whitespaces)
+        if t.contains("://") { return t }
+        return "https://" + t
+    }
+}
+
 struct FieldDef: Identifiable, Codable, Hashable {
     var id: UUID = UUID()
     var name: String
@@ -189,6 +224,9 @@ struct Item: Identifiable, Codable, Hashable {
     var tagIDs: [UUID] = []
     var checkpoints: [Checkpoint] = []
     var pages: [Page] = []
+    /// Links collected under this topic. Optional so stores written before
+    /// the Learning section existed still decode.
+    var resources: [Resource]? = nil
     var values: [String: String] = [:]      // FieldDef.id.uuidString -> raw value
     var dependsOn: [UUID] = []
     var estimateHours: Double? = nil
@@ -198,6 +236,9 @@ struct Item: Identifiable, Codable, Hashable {
     // MARK: Derived
 
     var isDone: Bool { status == .done }
+
+    var links: [Resource] { resources ?? [] }
+    var unreadLinks: Int { links.filter { !$0.done }.count }
 
     /// The category, falling back for anything created before categories existed.
     var category: ItemKind {
@@ -250,6 +291,7 @@ enum Route: Hashable {
     case today
     case upcoming
     case all
+    case learning
     case project(UUID)
     case tag(UUID)
 }

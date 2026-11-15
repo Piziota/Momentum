@@ -167,7 +167,8 @@ struct MomentumCommands: Commands {
             Group {
                 Button("Today") { store.route = .today }.keyboardShortcut("1", modifiers: .command)
                 Button("Upcoming") { store.route = .upcoming }.keyboardShortcut("2", modifiers: .command)
-                Button("All Tasks") { store.route = .all }.keyboardShortcut("3", modifiers: .command)
+                Button("Learning") { store.route = .learning }.keyboardShortcut("3", modifiers: .command)
+                Button("All Tasks") { store.route = .all }.keyboardShortcut("4", modifiers: .command)
             }
             Divider()
             Group {
