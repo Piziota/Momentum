@@ -94,7 +94,10 @@ struct QuickParser {
                 dayPart = nextWeekday(wd)
                 consumed = 2
             }
-            else if t == "on" || t == "by" || t == "due", weekdays[next] != nil || next == "today" || next == "tomorrow" {
+            else if t == "on" || t == "by" || t == "due",
+                    weekdays[next] != nil || next == "today" || next == "tomorrow"
+                        || (dayNumber(next) != nil && i + 2 < tokens.count
+                            && months[String(lower(tokens[i + 2]).prefix(3))] != nil) {
                 // "on friday" / "by tomorrow" — drop the preposition, let the next token speak.
                 consumed = 1
             }
@@ -116,10 +119,10 @@ struct QuickParser {
                 dayPart = nextWeekday(wd)
             }
             // ---- "12 dec" / "dec 12"
-            else if let d = Int(t), (1...31).contains(d), let m = months[String(next.prefix(3))] {
+            else if let d = dayNumber(t), let m = months[String(next.prefix(3))] {
                 dayPart = makeDate(day: d, month: m); consumed = 2
             }
-            else if let m = months[String(t.prefix(3))], t.count <= 9, let d = Int(next), (1...31).contains(d) {
+            else if let m = months[String(t.prefix(3))], t.count <= 9, let d = dayNumber(next) {
                 dayPart = makeDate(day: d, month: m); consumed = 2
             }
             // ---- 12/06 or 12.06
@@ -175,6 +178,16 @@ struct QuickParser {
         case "!low", "!l", "!3", "p3", "!": return .low
         default: return nil
         }
+    }
+
+    /// A day of the month, written plainly or as an ordinal: 24, 24th, 1st, 2nd, 3rd.
+    private static func dayNumber(_ s: String) -> Int? {
+        var str = s
+        for suffix in ["st", "nd", "rd", "th"] where str.hasSuffix(suffix) {
+            str.removeLast(2); break
+        }
+        guard let d = Int(str), (1...31).contains(d) else { return nil }
+        return d
     }
 
     private static func estimate(_ s: String) -> Double? {
