@@ -1,81 +1,129 @@
 # Momentum
 
-A native macOS personal manager, built for one problem: *you forget things and miss deadlines
-because you're running several projects at once.* Everything in it points at that.
+A native macOS personal manager for people running several things at once — built around one
+problem: *things get forgotten, and deadlines slip past.*
 
-Built with SwiftUI. No Xcode needed — it compiles with the Command Line Tools you already have.
+Tasks break into checkpoints, every deadline is visible before it bites, and the same data shows
+up as a list, a board, a calendar or a Gantt timeline depending on what you need to see.
 
-## Build and run
+![Today view](docs/today.png)
+
+---
+
+## Why it exists
+
+Most task apps are a place to write things down. The writing down was never the hard part — the
+hard part is *noticing in time*. So the design pushes everything toward that:
+
+- The home screen opens on what's **overdue**, what's **due today**, and what's **coming**
+- A **menu bar counter** shows the number without you opening anything
+- **Notifications** arrive the evening before, the morning of, and an hour before a timed deadline
+- A **system-wide hotkey** captures a task in two seconds, from whatever app you're in, so it
+  never gets lost in the gap between thinking of it and writing it down
+
+---
+
+## Install
+
+**Requirements:** macOS 13 (Ventura) or later. No Xcode needed — just the Command Line Tools.
+
+If you don't have them yet:
 
 ```bash
+xcode-select --install
+```
+
+Then clone and build:
+
+```bash
+git clone https://github.com/Piziota/Momentum.git
+cd Momentum
 ./build.sh
 ```
 
-That compiles the app, builds the icon, ad-hoc signs it, and installs it to
-`/Applications/Momentum.app` — quitting and relaunching the running copy if there is one.
-The install only happens when the compile succeeded, so a broken build can never replace a
-working app. To build without touching the installed copy:
+That compiles the app, generates its icon, ad-hoc signs it, and installs it to
+`/Applications/Momentum.app`. If a copy is already running it's quit, replaced and relaunched.
+The install only runs when the build succeeded, so a broken compile can never replace a working
+app. The whole thing takes about a minute on a first run.
+
+To build without touching the installed copy:
 
 ```bash
 ./build.sh --no-install
 ```
 
-Add it to **System Settings → General → Login Items** so the menu bar counter and the global
-capture hotkey are always available.
+### After installing — three one-time steps
 
-## What's in it
+1. **First launch.** macOS may say the app is from an unidentified developer, because it's signed
+   for your machine rather than notarized by Apple. Right-click `Momentum.app` → **Open** →
+   **Open**. It only asks once.
 
-**Categories.** Every new task asks what it is, and the answer changes how it behaves:
+2. **Allow notifications** when prompted. Decline and the app can't remind you of anything, which
+   removes most of the point.
+
+3. **Start it at login** — **System Settings → General → Login Items → +** → pick Momentum.
+   The menu bar counter and the global hotkey only work while it's running.
+
+### Uninstalling
+
+Delete `/Applications/Momentum.app`. Your tasks live in
+`~/Library/Application Support/Momentum/`, so remove that folder too if you want them gone.
+
+---
+
+## What it does
+
+### Categories
+
+Every new task asks what kind of thing it is, and the answer changes how it behaves:
 
 | Category | Means | What it does |
 |---|---|---|
-| **Project** | Multi-step, over days | Gets a start and a due date, so it draws as a bar on the timeline |
+| **Project** | Multi-step, over days | Gets a start and a due date, draws as a bar on the timeline |
 | **Learning** | Ongoing, no deadline | Starts as in-progress, no deadline pressure |
 | **Event** | Happens on one day | Date only, no span — a diamond milestone on the timeline |
 | **Task** | A single thing to do | Plain, just a due date if you gave one |
 
-The palette pre-selects a guess (a time of day → Event, "learn/read/course/study" → Learning,
-a long estimate → Project); click another if it guessed wrong. Change it later from the inspector
-or by right-clicking a task → Category.
+The capture box pre-selects a guess — a time of day suggests an Event, words like *learn*, *read*
+or *course* suggest Learning, a long estimate suggests a Project — and you click another if it
+guessed wrong.
 
-**Structure**
+### Structure
 
-- **Projects** → **Tasks** → **Checkpoints** (small steps, each with its own optional date)
-- **Pages** attached to any task — Markdown, with live preview. For meeting notes, research, drafts.
-- **Tags**, colour-coded and shared across projects
-- **Custom fields** per project (text, number, link, date, dropdown). The sample *Job applications*
-  project has Company / Job link / Salary / Stage — right-click a project to edit its fields.
-- **Dependencies**: "this can't start until that's done". Cycles are rejected automatically.
+- **Projects → Tasks → Checkpoints**, where each checkpoint can carry its own date
+- **Pages** attached to any task — Markdown with live preview, for notes, research and drafts
+- **Tags**, colour-coded, shared across projects
+- **Custom fields** per project: text, number, link, date or dropdown
+- **Dependencies** — "this can't start until that's done", with cycles rejected automatically
 
-**Four views over the same data** (switcher top right, or ⌥⌘L / ⌥⌘B / ⌥⌘K / ⌥⌘G)
+Task progress is derived from checkpoints rather than typed in: three of five done is 60%, and
+that number drives the progress bars and the fill on the Gantt bars.
+
+### Four views over the same data
 
 | View | What it gives you |
 |---|---|
-| **List** | Today's hero screen: overdue, due today, checkpoints due, in progress, next 7 days. Elsewhere it groups by deadline horizon. |
-| **Board** | Kanban by status. Drag cards between columns. |
-| **Calendar** | Month grid. Drag a task to another day to reschedule it; the side panel shows that day and lets you add to it. |
-| **Timeline** | Gantt. Bars fill with checkpoint progress, dependency arrows curve between tasks (red and dashed when a prerequisite finishes too late), dashed line for today. Drag a bar to move it, drag its edges to resize. Slider top left zooms. |
+| **List** | Today's screen: overdue, due today, checkpoints due, in progress, next 7 days |
+| **Board** | Kanban by status, drag cards between columns |
+| **Calendar** | Month grid — drag a task to another day to reschedule it |
+| **Timeline** | Gantt — drag bars to move, drag edges to resize, dependency arrows, today line |
 
-**The anti-forgetting machinery**
+![Timeline](docs/timeline.png)
 
-- **Menu bar counter** — overdue + due today, visible without opening the app. Click it for the list,
-  tick things off, or quick-capture from there.
-- **Notifications** — the evening before (19:00), the morning of (09:00), an hour before a timed
-  deadline, plus checkpoint deadlines. A daily review nudge at 08:30.
-  macOS will ask permission the first time; say yes or it can't remind you.
-- **Global capture hotkey** — **⌃⌥Space** from *any* app, without switching to Momentum first.
-  It brings the window forward with the capture box open and focused. Change it under
-  **Momentum → Global Capture Hotkey** (⌃⌥Space, ⌃⌥N, ⌃⇧Space, ⌥Space, or Off); the choice is
-  remembered. If another app already owns the combination, the menu says so — pick a different one.
-  It uses Carbon hotkey registration, so it needs **no Accessibility permission**, but Momentum
-  has to be running (hence the Login Items step above).
-- **Quick capture inside the app** — ⌘N or ⌘⇧Space.
+The timeline turns a dependency arrow red and dashed when the prerequisite finishes *after* the
+task depending on it is due — the plan contradicting itself, visible at a glance.
 
-**Natural language in the quick-add box.** Type it as one line:
+![Calendar](docs/calendar.png)
+
+### Capture
+
+Press **⌃⌥Space** from any app. One line gets parsed into a structured task:
 
 ```
 Send CV to Erste fri 5pm #jobs @finaustria !high ~2h
 ```
+
+![Quick capture](docs/capture.png)
 
 | Pattern | Meaning |
 |---|---|
@@ -84,13 +132,19 @@ Send CV to Erste fri 5pm #jobs @finaustria !high ~2h
 | `in 3 days`, `in 2 weeks` | offsets |
 | `12 dec`, `dec 12`, `12/06` | explicit dates |
 | `5pm`, `17:30`, `noon` | times |
-| `#tag` | tag (created if new) |
+| `#tag` | tag, created if new |
 | `@project` | project, matched by prefix |
 | `!high` `!med` `!low` (or `p1` `p2` `p3`) | priority |
 | `~2h` `~90m` | time estimate |
 
-The strip under the field shows what it understood before you hit Enter. It also works in the
-checkpoint field, so "Proofread fri" dates the checkpoint.
+A strip under the field shows what it understood before you commit. The same parser runs in the
+checkpoint field, so typing "Proofread fri" dates the checkpoint.
+
+The hotkey is configurable under **Momentum → Global Capture Hotkey** (⌃⌥Space, ⌃⌥N, ⌃⇧Space,
+⌥Space, or Off). It uses Carbon hotkey registration, so it needs **no Accessibility permission** —
+but the app has to be running.
+
+---
 
 ## Keyboard
 
@@ -105,75 +159,76 @@ checkpoint field, so "Proofread fri" dates the checkpoint.
 | ⌘⌫ | Delete selected task |
 | Esc | Close the inspector |
 
+---
+
 ## Your data
 
-One JSON file, written atomically, no cloud, no account:
+One JSON file, written atomically. No cloud, no account, no telemetry:
 
 ```
 ~/Library/Application Support/Momentum/store.json
 ```
 
 **Momentum → Reveal Data File in Finder** opens it. Back it up by copying that file, or put the
-folder in iCloud Drive / Dropbox if you want it on another Mac.
+folder in iCloud Drive or Dropbox to sync it between Macs.
 
-The app ships with sample data so the views aren't empty. **Momentum → Remove Sample Data**
-wipes it when you're ready to use it for real.
+It sits outside both the source folder and the app bundle, so rebuilding, reinstalling or deleting
+the app never touches your tasks.
 
-## Layout
+The app ships with sample data so the views aren't empty on first run.
+**Momentum → Remove Sample Data** clears it when you're ready for the real thing.
+
+---
+
+## How it's built
+
+SwiftUI throughout, compiled directly with `swiftc` and bundled by a shell script — no `.xcodeproj`,
+no package manager, no third-party dependencies.
 
 ```
 Sources/
-  Model.swift          types: Project, Item, Checkpoint, Page, Tag, FieldDef
-  Store.swift          AppStore: state, persistence, queries, mutations, sample data
-  Theme.swift          colours (light + dark), fonts, motion, date formatting
-  Components.swift     checkboxes, chips, pills, rings, bars, buttons, empty states
-  TaskRow.swift        the main list row, with inline checkpoint expansion
-  Sidebar.swift        navigation, projects, tags, project editor sheet
-  TodayView.swift      the home screen
-  MainContent.swift    top bar + grouped list
-  BoardView.swift      kanban with drag and drop
-  CalendarView.swift   month grid, day panel, drag to reschedule
-  GanttView.swift      timeline: bars, dependencies, drag and resize
-  DetailView.swift     the inspector: checkpoints, tags, fields, dependencies
-  Pages.swift          page cards + Markdown renderer
-  QuickAdd.swift       the capture palette
+  Model.swift            Project, Item, Checkpoint, Page, Tag, FieldDef, ItemKind
+  Store.swift            state, persistence, queries, mutations, sample data
+  Theme.swift            colours (light + dark), fonts, motion, date formatting
+  Components.swift       checkboxes, chips, pills, rings, bars, buttons, empty states
+  TaskRow.swift          the main list row, with inline checkpoint expansion
+  Sidebar.swift          navigation, projects, tags, project editor
+  TodayView.swift        the home screen
+  MainContent.swift      top bar and grouped list
+  BoardView.swift        kanban with drag and drop
+  CalendarView.swift     month grid, day panel, drag to reschedule
+  GanttView.swift        timeline: bars, milestones, dependencies, drag and resize
+  DetailView.swift       inspector: checkpoints, tags, fields, dependencies
+  Pages.swift            page cards and the Markdown renderer
+  QuickAdd.swift         the capture palette
   NaturalLanguage.swift  the date/tag/priority parser
-  Reminders.swift      notification scheduling
-  GlobalHotkey.swift   system-wide capture hotkey (Carbon), window focusing
-  App.swift            scenes, menu bar extra, menus and shortcuts
-tools/MakeIcon.swift   draws the app icon at build time
-build.sh               compiles, bundles, makes the icon, ad-hoc signs
+  Reminders.swift        notification scheduling
+  GlobalHotkey.swift     system-wide hotkey (Carbon) and window focusing
+  App.swift              scenes, menu bar extra, menus and shortcuts
+tools/MakeIcon.swift     draws the app icon at build time
+build.sh                 compile, bundle, icon, sign, install
 ```
 
-## Notes and limits
+Normal loop: edit something in `Sources/`, run `./build.sh`, try it, commit when it's worth
+keeping. `build/` is gitignored because it's regenerated every time.
 
-- macOS 13+, builds for whichever architecture you're on.
-- Ad-hoc signed, so it's yours alone — macOS may ask you to confirm the first launch
-  (right-click → Open if it does).
-- Storage is a JSON file. Fine for thousands of tasks; if it ever gets slow, the swap to SQLite
-  only touches `Store.swift`.
-- `MOMENTUM_ROUTE` / `MOMENTUM_MODE` / `MOMENTUM_SELECT` / `MOMENTUM_QUICKADD` environment
-  variables pick the starting view, and `MOMENTUM_HOTKEY_TEST=1` prints whether the global
-  hotkey registered — handy for testing.
-- The global hotkey only works while the app is running; quitting it releases the combination.
+Environment variables useful while developing: `MOMENTUM_ROUTE`, `MOMENTUM_MODE`,
+`MOMENTUM_SELECT` and `MOMENTUM_QUICKADD` pick the starting view, and `MOMENTUM_HOTKEY_TEST=1`
+reports whether the global hotkey registered.
 
-## Worth adding next
+---
 
-1. EventKit, to show your Apple/Outlook calendar events next to your tasks.
-2. Recurring tasks ("every Monday").
-3. An iPhone companion — the model is plain Codable, so it would port cleanly.
+## Limits, honestly
 
-## Working on it
+- **Single user, single Mac.** No sync, no sharing, no server.
+- **Storage is a JSON file**, read into memory at launch. Fine for thousands of tasks; if it ever
+  felt slow, moving to SQLite touches only `Store.swift`.
+- **Ad-hoc signed**, not notarized — hence the right-click on first launch.
+- **No recurring tasks yet** ("every Monday"), the most obvious missing piece.
+- The global hotkey is released when you quit the app.
 
-```
-~/projects/Momentum        the source, under git
-/Applications/Momentum.app the app you actually run (installed by build.sh)
-~/Library/Application Support/Momentum/store.json   your tasks
-```
+### Possible next steps
 
-Your data lives outside both the source folder and the app bundle, so rebuilding, reinstalling
-or deleting the app never touches it.
-
-Normal loop: edit something in `Sources/`, run `./build.sh`, try it, then
-`git add -A && git commit` when it's worth keeping. `git log` is your undo history; `build/` is
-ignored because it's regenerated every time.
+1. Recurring tasks
+2. EventKit, to show Apple or Outlook calendar events alongside tasks
+3. An iPhone companion — the model is plain `Codable`, so it would port cleanly
