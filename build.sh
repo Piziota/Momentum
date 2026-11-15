@@ -126,3 +126,7 @@ else
   echo "  install failed — the previous version is still in place" >&2
   exit 1
 fi
+
+# Explicit, so the script never inherits a non-zero status from the
+# "was it running?" test above.
+exit 0

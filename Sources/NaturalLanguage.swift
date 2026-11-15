@@ -17,8 +17,13 @@ struct QuickParser {
 
     private static let months = ["jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
                                  "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12]
-    private static let weekdays = ["sun": 1, "mon": 2, "tue": 3, "tues": 3, "wed": 4,
-                                   "thu": 5, "thur": 5, "thurs": 5, "fri": 6, "sat": 7]
+    private static let weekdays = ["sun": 1, "sunday": 1,
+                                   "mon": 2, "monday": 2,
+                                   "tue": 3, "tues": 3, "tuesday": 3,
+                                   "wed": 4, "weds": 4, "wednesday": 4,
+                                   "thu": 5, "thur": 5, "thurs": 5, "thursday": 5,
+                                   "fri": 6, "friday": 6,
+                                   "sat": 7, "saturday": 7]
 
     static func parse(_ raw: String) -> ParsedInput {
         var out = ParsedInput()
@@ -85,6 +90,14 @@ struct QuickParser {
                 dayPart = nextWeekday(wd, skipToday: true)
                 consumed = 2
             }
+            else if t == "this", let wd = weekdays[next] {
+                dayPart = nextWeekday(wd)
+                consumed = 2
+            }
+            else if t == "on" || t == "by" || t == "due", weekdays[next] != nil || next == "today" || next == "tomorrow" {
+                // "on friday" / "by tomorrow" — drop the preposition, let the next token speak.
+                consumed = 1
+            }
             // ---- in 3 days / in 2 weeks
             else if t == "in", let n = Int(next), i + 2 < tokens.count {
                 let unit = lower(tokens[i + 2])
@@ -139,7 +152,17 @@ struct QuickParser {
         if let due = out.due {
             out.hints.insert("due " + DateFmt.dueLabel(due), at: 0)
         }
-        out.title = titleWords.joined(separator: " ").trimmingCharacters(in: .whitespaces)
+        // "Data Viz exam on 20 Nov" loses its date to the parser and would otherwise
+        // leave a dangling "on". Drop trailing words that only introduced the date.
+        let filler: Set<String> = ["on", "at", "by", "due", "before", "until", "till",
+                                   "the", "this", "next", "is", "-", "–", ","]
+        while let last = titleWords.last,
+              filler.contains(last.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ",.-"))) {
+            titleWords.removeLast()
+        }
+
+        out.title = titleWords.joined(separator: " ")
+            .trimmingCharacters(in: CharacterSet(charactersIn: " ,-–"))
         return out
     }
 

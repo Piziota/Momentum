@@ -140,6 +140,15 @@ Send CV to Erste fri 5pm #jobs @finaustria !high ~2h
 A strip under the field shows what it understood before you commit. The same parser runs in the
 checkpoint field, so typing "Proofread fri" dates the checkpoint.
 
+**You don't have to type the date.** The capture box also asks outright, with a **When?** row
+(Today / Tomorrow / a week out / any date from a calendar / No date) and a separate **Time** row
+(All day / 09:00 / 12:00 / 17:00 / any other time). **Time is always optional** — "All day" gives
+a task a date with no clock attached, and it simply shows as due that day.
+
+Typing and picking stay in sync: write "fri 5pm" and the chips light up to match; click a chip
+and it overrides whatever you typed. Leading words that only introduced a date are dropped, so
+"Data Viz exam on 20 Nov" becomes a task called *Data Viz exam*, not *Data Viz exam on*.
+
 The hotkey is configurable under **Momentum → Global Capture Hotkey** (⌃⌥Space, ⌃⌥N, ⌃⇧Space,
 ⌥Space, or Off). It uses Carbon hotkey registration, so it needs **no Accessibility permission** —
 but the app has to be running.
