@@ -132,7 +132,8 @@ the blurred backdrops with it rather than just recolouring the content.
 
 - **Projects → Tasks → Checkpoints**, where each checkpoint can carry its own date
 - **Pages** attached to any task — Markdown with live preview, for notes, research and drafts
-- **Tags**, colour-coded, shared across projects
+- **Tags**, colour-coded, shared across projects — add one with the **+** beside
+  TAGS in the sidebar, or just type `#name` while capturing
 - **Custom fields** per project: text, number, link, date or dropdown
 - **Dependencies** — "this can't start until that's done", with cycles rejected automatically
 

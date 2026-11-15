@@ -5,6 +5,8 @@ struct Sidebar: View {
     @State private var newProject = ""
     @State private var addingProject = false
     @State private var editingProject: Project? = nil
+    @State private var newTag = ""
+    @State private var addingTag = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -146,10 +148,16 @@ struct Sidebar: View {
 
     private var tagList: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("TAGS")
-                .font(Theme.ui(10, .bold)).tracking(0.8)
-                .foregroundStyle(Theme.textFaint)
-                .padding(.horizontal, 6)
+            HStack {
+                Text("TAGS")
+                    .font(Theme.ui(10, .bold)).tracking(0.8)
+                    .foregroundStyle(Theme.textFaint)
+                Spacer()
+                IconButton(icon: "plus", help: "New tag", size: 10) {
+                    withAnimation(Theme.quick) { addingTag = true }
+                }
+            }
+            .padding(.horizontal, 6)
 
             ForEach(store.tags) { t in
                 SidebarRow(icon: "number", title: t.name, tint: t.color,
@@ -161,7 +169,25 @@ struct Sidebar: View {
                     Button("Delete tag", role: .destructive) { store.deleteTag(t.id) }
                 }
             }
+
+            if addingTag {
+                InlineField(placeholder: "Tag name", text: $newTag) { commitTag() }
+                    .padding(.horizontal, 4)
+                    .transition(.opacity)
+            }
         }
+    }
+
+    /// Tags are created the same way the capture box creates them, so "#deep work",
+    /// "Deep Work" and "deep work" all land on the one tag rather than three.
+    private func commitTag() {
+        let name = newTag.trimmingCharacters(in: .whitespaces)
+        if !name.isEmpty {
+            let t = store.tagNamed(name)
+            store.route = .tag(t.id)
+        }
+        newTag = ""
+        withAnimation(Theme.quick) { addingTag = false }
     }
 
     // MARK: Footer
