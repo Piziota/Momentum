@@ -166,8 +166,11 @@ final class AppStore: ObservableObject {
     var overdue: [Item] {
         tasks.filter { $0.isOverdue }.sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
     }
+    /// Due later today. Something due at 11:00 when it is 14:00 is overdue, not
+    /// "due today" — counting it in both made the menu bar badge add it twice
+    /// and listed the same row under two headings on the Today screen.
     var dueToday: [Item] {
-        tasks.filter { !$0.isDone && ($0.dueDayOffset == 0) }
+        tasks.filter { !$0.isDone && !$0.isOverdue && ($0.dueDayOffset == 0) }
             .sorted { ($0.due ?? .distantFuture) < ($1.due ?? .distantFuture) }
     }
     var dueSoon: [Item] {            // next 2–7 days

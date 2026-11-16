@@ -112,6 +112,8 @@ Anything captured as a **Learning** category lands here, and every task has a
 **Links** tab in the inspector — so a project can collect resources too, and
 they show up on the shelf alongside the topics.
 
+![Learning](docs/learning.png)
+
 ### Bright and dark
 
 Two full themes, not one palette dimmed: every colour is defined twice, and the
