@@ -11,6 +11,17 @@ SDK="$(xcrun --sdk macosx --show-sdk-path)"
 ARCH="$(uname -m)"
 TARGET="${ARCH}-apple-macos13.0"
 
+# Flags, in any order: --no-install, --universal
+NO_INSTALL=0
+UNIVERSAL=0
+for arg in "$@"; do
+  case "$arg" in
+    --no-install) NO_INSTALL=1 ;;
+    --universal)  UNIVERSAL=1 ;;
+    *) echo "Unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
+
 OUT="build"
 APP="${OUT}/${APP_NAME}.app"
 MACOS_DIR="${APP}/Contents/MacOS"
@@ -20,15 +31,31 @@ echo "▸ Cleaning"
 rm -rf "$APP"
 mkdir -p "$MACOS_DIR" "$RES_DIR"
 
-echo "▸ Compiling (${TARGET})"
-swiftc \
-  -parse-as-library \
-  -target "$TARGET" \
-  -sdk "$SDK" \
-  -O \
-  -framework SwiftUI -framework AppKit -framework UserNotifications -framework Carbon \
-  -o "${MACOS_DIR}/${APP_NAME}" \
-  Sources/*.swift
+compile_slice() {   # $1 = target triple, $2 = output path
+  swiftc \
+    -parse-as-library \
+    -target "$1" \
+    -sdk "$SDK" \
+    -O \
+    -framework SwiftUI -framework AppKit -framework UserNotifications -framework Carbon \
+    -o "$2" \
+    Sources/*.swift
+}
+
+if [ "$UNIVERSAL" = "1" ]; then
+  # One binary that runs natively on both Apple Silicon and Intel, so a release
+  # does not land Apple Silicon users in Rosetta.
+  echo "▸ Compiling universal (arm64 + x86_64)"
+  compile_slice "arm64-apple-macos13.0"  "${OUT}/${APP_NAME}-arm64"
+  compile_slice "x86_64-apple-macos13.0" "${OUT}/${APP_NAME}-x86_64"
+  lipo -create -output "${MACOS_DIR}/${APP_NAME}" \
+       "${OUT}/${APP_NAME}-arm64" "${OUT}/${APP_NAME}-x86_64"
+  rm -f "${OUT}/${APP_NAME}-arm64" "${OUT}/${APP_NAME}-x86_64"
+  echo "  arches: $(lipo -archs "${MACOS_DIR}/${APP_NAME}")"
+else
+  echo "▸ Compiling (${TARGET})"
+  compile_slice "$TARGET" "${MACOS_DIR}/${APP_NAME}"
+fi
 
 echo "▸ Writing Info.plist"
 cat > "${APP}/Contents/Info.plist" <<PLIST
@@ -81,7 +108,7 @@ echo "▸ Done: ${PWD}/${APP}"
 # Install into /Applications.
 # Everything above succeeded (set -e), so the app being replaced is always a good build.
 # Pass --no-install to build without touching the installed copy.
-if [ "${1:-}" = "--no-install" ]; then
+if [ "$NO_INSTALL" = "1" ]; then
   echo "▸ Skipping install (--no-install)"
   exit 0
 fi

@@ -25,15 +25,45 @@ hard part is *noticing in time*. So the design pushes everything toward that:
 
 ## Install
 
-**Requirements:** macOS 13 (Ventura) or later. No Xcode needed — just the Command Line Tools.
+**Requirements:** macOS 13 (Ventura) or later. Apple Silicon or Intel.
 
-If you don't have them yet:
+### Download it
+
+Grab the latest `Momentum-*-macos.zip` from [Releases](https://github.com/Piziota/Momentum/releases),
+unzip it, and drag **Momentum.app** into your **Applications** folder. No Xcode, no terminal.
+
+### Opening it the first time
+
+macOS will refuse to open it the first time, and say something like *"Momentum" can't be opened
+because Apple cannot check it for malicious software.* That is expected, and it is not about this
+app in particular: it means the app has not been **notarized**, which requires a paid Apple
+Developer account. The source is all here if you would rather read it than trust it.
+
+To let it through, once:
+
+1. Double-click **Momentum.app**. The warning appears — click **Done** (not *Move to Trash*).
+2. Open **System Settings → Privacy & Security**, scroll to the **Security** section at the
+   bottom. It says *"Momentum" was blocked to protect your Mac.* Click **Open Anyway**.
+3. Confirm with **Open Anyway** and your password or Touch ID.
+
+macOS remembers, so this is a one-time step.
+
+> On macOS 14 (Sonoma) and earlier you can instead right-click the app → **Open** → **Open**.
+> Apple removed that shortcut in macOS 15 (Sequoia), which is why the steps above are the
+> reliable route now.
+
+If you are comfortable in a terminal, this does the same thing in one line:
 
 ```bash
-xcode-select --install
+xattr -dr com.apple.quarantine /Applications/Momentum.app
 ```
 
-Then clone and build:
+That removes the "downloaded from the internet" flag macOS attaches to the file, which is what
+triggers the block. Only run it on software you are willing to trust.
+
+### Or build it yourself
+
+Needs the Command Line Tools (`xcode-select --install`), nothing else:
 
 ```bash
 git clone https://github.com/Piziota/Momentum.git
@@ -44,24 +74,20 @@ cd Momentum
 That compiles the app, generates its icon, ad-hoc signs it, and installs it to
 `/Applications/Momentum.app`. If a copy is already running it's quit, replaced and relaunched.
 The install only runs when the build succeeded, so a broken compile can never replace a working
-app. The whole thing takes about a minute on a first run.
-
-To build without touching the installed copy:
+app. It takes about a minute. A build from source is not quarantined, so it opens without any
+of the steps above.
 
 ```bash
-./build.sh --no-install
+./build.sh --no-install     # build without touching the installed copy
+./release.sh                # package build/Momentum-<version>-macos.zip for a release
 ```
 
-### After installing — three one-time steps
+### Two more one-time steps
 
-1. **First launch.** macOS may say the app is from an unidentified developer, because it's signed
-   for your machine rather than notarized by Apple. Right-click `Momentum.app` → **Open** →
-   **Open**. It only asks once.
-
-2. **Allow notifications** when prompted. Decline and the app can't remind you of anything, which
+1. **Allow notifications** when prompted. Decline and the app can't remind you of anything, which
    removes most of the point.
 
-3. **Start it at login** — **System Settings → General → Login Items → +** → pick Momentum.
+2. **Start it at login** — **System Settings → General → Login Items → +** → pick Momentum.
    The menu bar counter and the global hotkey only work while it's running.
 
 ### Uninstalling
@@ -260,7 +286,8 @@ Sources/
   GlobalHotkey.swift     system-wide hotkey (Carbon) and window focusing
   App.swift              scenes, menu bar extra, menus and shortcuts
 tools/MakeIcon.swift     draws the app icon at build time
-build.sh                 compile, bundle, icon, sign, install
+build.sh                 compile, bundle, icon, sign, install (--universal for both arches)
+release.sh               package a universal zip for a GitHub Release
 ```
 
 Normal loop: edit something in `Sources/`, run `./build.sh`, try it, commit when it's worth
@@ -277,7 +304,8 @@ reports whether the global hotkey registered.
 - **Single user, single Mac.** No sync, no sharing, no server.
 - **Storage is a JSON file**, read into memory at launch. Fine for thousands of tasks; if it ever
   felt slow, moving to SQLite touches only `Store.swift`.
-- **Ad-hoc signed**, not notarized — hence the right-click on first launch.
+- **Ad-hoc signed**, not notarized — notarizing needs a paid Apple Developer account, so
+  first launch takes a trip through System Settings (see Install).
 - **No recurring tasks yet** ("every Monday"), the most obvious missing piece.
 - The global hotkey is released when you quit the app.
 
